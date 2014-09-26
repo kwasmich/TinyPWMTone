@@ -62,17 +62,6 @@ static const uint16_t melody2[] PROGMEM = {
 };
 
 
-//static int adc_read( void ) {
-//    // Start the conversion
-//    ADCSRA |= (1 << ADSC);
-//    
-//    // Wait for it to finish
-//    while (ADCSRA & (1 << ADSC));
-//    
-//    return ADCH;
-//}
-
-
 
 static void setup_power_down( void ) {
     BIT_SET( PORTB, _BV( INT_PIN ) );       // interrupt pin hi
@@ -119,20 +108,18 @@ int main( void ) {
     // CTC on
     TCCR0A = _BV2( WGM01, COM0A0 ); // CTC Mode, toggle OC0A on compare Match
     
-    // ADC
-    //ADMUX = BITFIELD2( ADLAR, MUX0 ); // use 8 MSBs (ADC is 10bit), use ACD1
-    //ADCSRA = BITFIELD3( ADEN, ADPS1, ADPS0 );
-    
     setup_power_down();
     
+    // blinking lights to indicate device is powered up
+    _delay_ms( 500 );
+    BIT_SET( PORTB, _BV( LED1_PIN ) ); // LED on
+    BIT_CLR( PORTB, _BV( LED2_PIN ) ); // LED off
+    _delay_ms( 500 );
+    BIT_TGL( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs toggle
+    _delay_ms( 500 );
+    BIT_CLR( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs off
+    
 	while ( true ) {
-        BIT_SET( PORTB, _BV( LED1_PIN ) ); // LED on
-        BIT_CLR( PORTB, _BV( LED2_PIN ) ); // LED off
-        _delay_ms( 500 );
-        BIT_TGL( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs toggle
-        _delay_ms( 500 );
-        BIT_CLR( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs off
-        
         power_down();
         
         BIT_SET( PORTB, _BV( LED1_PIN ) ); // LED on
@@ -144,7 +131,6 @@ int main( void ) {
             prescaler = ( tone >> 6 ) bitand 0x3;
             duration = tone bitand 0x3F;
             OCR0A = freq;
-            //OCR0A = adc_read();
             
             BIT_TGL( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs toggle
             
@@ -172,7 +158,6 @@ int main( void ) {
             prescaler = ( tone >> 6 ) bitand 0x3;
             duration = tone bitand 0x3F;
             OCR0A = freq;
-            //OCR0A = adc_read();
             
             BIT_TGL( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs toggle
             
