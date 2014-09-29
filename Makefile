@@ -1,4 +1,5 @@
-MCU=attiny13
+MCU=attiny13a
+MCU_DUDE=attiny13
 OBJCOPY=/opt/local/bin/avr-objcopy
 CC=/opt/local/bin/avr-gcc
 AVRSIZE=/opt/local/bin/avr-size
@@ -22,11 +23,12 @@ $(EXECUTABLE).hex: $(EXECUTABLE).elf
 	$(CC) $(CFLAGS) -S -o main.s -c $<
 
 flash: $(EXECUTABLE).hex
-	avrdude -c avrispmkII -P usb -p $(MCU) -U flash:w:$(EXECUTABLE).hex
+	avrdude -c avrispmkII -P usb -p $(MCU_DUDE) -U flash:w:$(EXECUTABLE).hex
 #	avrdude -c avrispmkII -P usb -p attiny13 -U lfuse:w:0x6A:m
 
 clean:
 	rm -f $(OBJECTS)
-	rm -f *.elf
-	rm -f *.hex
-
+	rm -f $(EXECUTABLE).elf
+	rm -f $(EXECUTABLE).hex
+	rm -f *.s
+	rm -f a.out

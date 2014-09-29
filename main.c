@@ -67,9 +67,7 @@ static void setup_power_down( void ) {
     BIT_SET( PORTB, _BV( INT_PIN ) );       // interrupt pin hi
     BIT_SET( PCMSK, _BV( INTERRUPTOR ) );   // set PB1 to trigger interrupt
     
-    // Set Sleep Mode to Power-Down
-    BIT_CLR( MCUCR, _BV( SM0 ) );
-    BIT_SET( MCUCR, _BV( SM1 ) );
+    set_sleep_mode( SLEEP_MODE_PWR_DOWN );
 }
 
 
@@ -77,11 +75,11 @@ static void setup_power_down( void ) {
 static void power_down( void ) {
     BIT_SET( GIFR, _BV( PCIF ) );   // Clear interrupt signal
     BIT_SET( GIMSK, _BV( PCIE ) );  // Pin Change Interrupt Enabled
-    BIT_SET( MCUCR, _BV( SE ) );    // Enable Sleep Mode
+    sleep_enable();
     sei();                          // Enable Interrupts
     sleep_cpu();                    // Enter sleep mode
     cli();                          // Disable Interrupts
-    BIT_CLR( MCUCR, _BV( SE ) );    // Disable Sleep Mode
+    sleep_disable();
     BIT_CLR( GIMSK, _BV( PCIE ) );  // Pin Change Interrupt Disabled
 }
 
@@ -93,11 +91,41 @@ ISR( PCINT0_vect ) {
 
 
 
-int main( void ) {
+void play( const uint16_t * const in_MELODY, const uint8_t in_SIZE ) {
     uint16_t tone;
     uint8_t freq;
     uint8_t prescaler;
     uint8_t duration;
+    uint8_t i;
+    
+    BIT_SET( PORTB, _BV( LED1_PIN ) ); // LED1 on
+    
+    for ( i = 0; i < in_SIZE; i++ ) {
+        tone = pgm_read_word( &in_MELODY[i] );
+        freq = ( tone >> 8 );
+        prescaler = ( tone >> 6 ) bitand 0x3;
+        duration = tone bitand 0x3F;
+        OCR0A = freq;
+        
+        BIT_TGL( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs toggle
+        
+        TCCR0B = prescaler bitand 0x7;  // set the 3 LSBs to select clock prescaler
+        
+        do {
+            _delay_ms( BASE_DURATION );
+            duration--;
+        } while ( duration );
+        
+        TCCR0B = 0; // stop clock
+        _delay_ms( 10 );
+    }
+    
+    BIT_CLR( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs off
+}
+
+
+
+int main( void ) {
     uint8_t i;
     const uint8_t n1 = sizeof( melody1 ) / sizeof( uint16_t );
     const uint8_t n2 = sizeof( melody2 ) / sizeof( uint16_t );
@@ -113,65 +141,23 @@ int main( void ) {
     // blinking lights to indicate device is powered up
     _delay_ms( 500 );
     BIT_SET( PORTB, _BV( LED1_PIN ) ); // LED on
-    BIT_CLR( PORTB, _BV( LED2_PIN ) ); // LED off
-    _delay_ms( 500 );
-    BIT_TGL( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs toggle
+    
+    i = 3;
+    
+    do {
+        _delay_ms( 500 );
+        BIT_TGL( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs toggle
+        i--;
+    } while ( i );
+    
     _delay_ms( 500 );
     BIT_CLR( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs off
     
 	while ( true ) {
         power_down();
-        
-        BIT_SET( PORTB, _BV( LED1_PIN ) ); // LED on
-        BIT_CLR( PORTB, _BV( LED2_PIN ) ); // LED off
-
-        for ( i = 0; i < n1; i++ ) {
-            tone = pgm_read_word( &melody1[i] );
-            freq = ( tone >> 8 );
-            prescaler = ( tone >> 6 ) bitand 0x3;
-            duration = tone bitand 0x3F;
-            OCR0A = freq;
-            
-            BIT_TGL( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs toggle
-            
-            TCCR0B = prescaler bitand 0x7;  // set the 3 LSBs to select clock prescaler
-            
-            do {
-                _delay_ms( BASE_DURATION );
-                duration--;
-            } while ( duration );
-            
-            TCCR0B = 0; // stop clock
-            _delay_ms( 10 );
-        }
-        
-        BIT_CLR( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs off
+        play( melody1, n1 );
         
         power_down();
-        
-        BIT_SET( PORTB, _BV( LED1_PIN ) ); // LED on
-        BIT_CLR( PORTB, _BV( LED2_PIN ) ); // LED off
-
-        for ( i = 0; i < n2; i++ ) {
-            tone = pgm_read_word( &melody2[i] );
-            freq = ( tone >> 8 );
-            prescaler = ( tone >> 6 ) bitand 0x3;
-            duration = tone bitand 0x3F;
-            OCR0A = freq;
-            
-            BIT_TGL( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs toggle
-            
-            TCCR0B = prescaler bitand 0x7;  // set the 3 LSBs to select clock prescaler
-            
-            do {
-                _delay_ms( BASE_DURATION );
-                duration--;
-            } while ( duration );
-            
-            TCCR0B = 0; // stop clock
-            _delay_ms( 10 );
-        }
-        
-        BIT_CLR( PORTB, _BV2( LED1_PIN, LED2_PIN ) ); // LEDs off
+        play( melody2, n2 );
 	}
 }
