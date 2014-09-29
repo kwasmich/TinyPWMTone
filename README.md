@@ -33,17 +33,19 @@ Wiring
 ------
 
 ```
-          GND  GND
-           |    |
-VCC       BTN  SPK
- |    |    |    |
------------------
-|               |
-|   ATtiny13A   |
-|               |
------------------
- |    |    |   |
-    LED2 LED1 GND
-      |    |
-     GND  GND
+             GND   GND
+              |     |
+ VCC         BTN  SPEAK
+  |     |     |     |
+-----------------------
+|                     |
+|                     |
+|      ATtiny13A      |
+|                     |
+|                     |
+-----------------------
+  |     |     |     |
+       LED1  LED2  GND
+        |     |
+       GND   GND
 ```
