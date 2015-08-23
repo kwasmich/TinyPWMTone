@@ -17,7 +17,7 @@
 #include <unistd.h>
 
 
-const char* TONE_NAME[] = {
+const char *TONE_NAME[] = {
     "C-",
     "C#",
     "D-",
@@ -50,72 +50,72 @@ const float TONE_HZ[] = {
 };
 
 
-int main( int argc, const char * argv[] ) {
+int main(int argc, const char *argv[]) {
     unsigned int timeBase = 3000000;
     char buffer[10];
     char prevLine[10];
-    
+
     char tone[3] = "--";
     int octave;
     unsigned int duration;
-    
-    char* line = fgets( buffer, 10, stdin );
-    assert( line != NULL );
-    
-    int parsed = sscanf( line, "%c%c%i %i", &tone[0], &tone[1], &octave, &duration );
-    
-    while ( parsed == 4 ) {
+
+    char *line = fgets(buffer, 10, stdin);
+    assert(line != NULL);
+
+    int parsed = sscanf(line, "%c%c%i %i", &tone[0], &tone[1], &octave, &duration);
+
+    while (parsed == 4) {
         //printf( "%s%i, 1/%i\n", tone, octave, duration );
-        fflush( stdout );
+        fflush(stdout);
         int divisor = 1 << (8 - octave - 2);
         int toneIndex = 0;
-        
-        for ( toneIndex = 0; toneIndex < 13; toneIndex++ ) {
-            if ( 0 == strncmp( tone, TONE_NAME[toneIndex], 2 ) ) {
+
+        for (toneIndex = 0; toneIndex < 13; toneIndex++) {
+            if (0 == strncmp(tone, TONE_NAME[toneIndex], 2)) {
                 break;
             }
         }
-        
-        assert( toneIndex < 13 );
+
+        assert(toneIndex < 13);
         uint16_t melody;
-        
-        if ( toneIndex < 12 ) {
+
+        if (toneIndex < 12) {
             float frequency = TONE_HZ[toneIndex] / divisor;
             float F_CPU = 9.6e6 / 8.0f;
             bool found = false;
-            
-            for ( int p = 1, pp = 1; p < 65; p *= 8, pp++ ) {
-                float fOCRnx = ( F_CPU / ( 2.0f * p * frequency ) ) - 1.0f;
-                uint16_t OCRnx = roundf( fOCRnx );
-                
-                if ( OCRnx < 256 ) {
-                    float tinyf = F_CPU / ( 2.0f * p * ( 1.0f + OCRnx ) );
-                    melody = ( OCRnx << 8 ) bitor ( pp << 6 ) bitor ( ( 32 / duration ) bitand 0x3F );
-                    printf( "0x%04x, ", melody );
+
+            for (int p = 1, pp = 1; p < 65; p *= 8, pp++) {
+                float fOCRnx = (F_CPU / (2.0f * p * frequency)) - 1.0f;
+                uint16_t OCRnx = roundf(fOCRnx);
+
+                if (OCRnx < 256) {
+                    float tinyf = F_CPU / (2.0f * p * (1.0f + OCRnx));
+                    melody = (OCRnx << 8) bitor(pp << 6) bitor((32 / duration) bitand 0x3F);
+                    printf("0x%04x, ", melody);
                     found = true;
                     break;
                 }
             }
-            
-            if ( !found ) {
-                printf( "\nERROR\n\n" );
+
+            if (!found) {
+                printf("\nERROR\n\n");
             }
-            
-            unsigned int range = (unsigned int)( 600000.0f / frequency );
+
+            unsigned int range = (unsigned int)(600000.0f / frequency);
         } else {
-            melody = ( ( 32 / duration ) bitand 0x3F );
-            printf( "0x%04x, ", melody );
+            melody = ((32 / duration) bitand 0x3F);
+            printf("0x%04x, ", melody);
         }
-        
-        strncpy( prevLine, line, 10 );
-        line = fgets( buffer, 10, stdin );
+
+        strncpy(prevLine, line, 10);
+        line = fgets(buffer, 10, stdin);
         parsed = 0;
-        
-        if ( line ) {
-            parsed = sscanf( line, "%c%c%i %i", &tone[0], &tone[1], &octave, &duration );
+
+        if (line) {
+            parsed = sscanf(line, "%c%c%i %i", &tone[0], &tone[1], &octave, &duration);
         }
     }
-    
+
     // insert code here...
     printf("Hello, World!\n");
     return 0;
